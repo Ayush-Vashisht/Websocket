@@ -20,12 +20,15 @@
 # if __name__ == "__main__":
 #     asyncio.run(main())
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 import random
 import string
+from flask_cors import CORS
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
+
+CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 def ack():
@@ -63,11 +66,8 @@ def handle_join(data):
     if username and room:
         join_room(room)
         print(f'{username} joined room: {room}')
-        # Emit link-token once user joins the room
-        token = generate_link_token()
-        emit('link-token', token, room=room)
 
-# Handle 'leave' event
+
 @socketio.on('leave')
 def handle_leave(data):
     username = data.get('username')
@@ -76,6 +76,19 @@ def handle_leave(data):
     if username and room:
         leave_room(room)
         print(f'{username} left room: {room}')
+        
+
+@app.route("/", methods=['POST'])
+def send_link_token():
+    data = request.get_json()
+    room = data.get('abhaAddress')
+    
+    if room:
+        token = generate_link_token()
+        socketio.emit('link-token', token, room=room)
+        return jsonify({"status": "success", "message": "Link token sent to room"}), 200
+    else:
+        return jsonify({"status": "error", "message": "Invalid room"}), 400
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)

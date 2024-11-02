@@ -1,33 +1,19 @@
-
-import  { useState, useEffect } from "react";
+import { useState } from "react";
 import io from "socket.io-client";
+import axios from "axios";
 
-const patient = {
-  id: 1,
-  name: "John Doe",
-  abhaNumber: 91501320832162,
-  abhaAddress: "gaurav.tripathi_55@abdm",
-  mobile: "9876543210",
-  age: 30,
-  sex: "Male",
-  image: "",
-};
 
 const WSConnection = () => {
   const [socket, setSocket] = useState(null);
   const [linkToken, setLinkToken] = useState(null);
 
-  useEffect(() => {
-    if (!patient || !patient.abhaAddress || !patient.abhaNumber) {
-      return;
-    }
-
+  const createWS = (p) => {
     const newSocket = io("http://localhost:5000");
     setSocket(newSocket);
 
     const joinRoom = () => {
-      const room = patient.abhaAddress;
-      const username = patient.abhaNumber;
+      const room = p.abhaAddress;
+      const username = p.abhaNumber;
 
       if (room && username) {
         // Emit the 'join' event to join the room
@@ -42,8 +28,8 @@ const WSConnection = () => {
     };
 
     const leaveRoom = () => {
-      const room = patient.abhaAddress;
-      const username = patient.abhaNumber;
+      const room = p.abhaAddress;
+      const username = p.abhaNumber;
 
       if (room && username) {
         // Emit the 'leave' event and disconnect the socket
@@ -59,11 +45,25 @@ const WSConnection = () => {
     return () => {
       leaveRoom();
     };
-  }, [patient]);
+  };
+
+  const handleClick = () => {
+    console.log("clicked");
+    axios.post("http://localhost:5000/", {
+      abhaNumber: 91501320832162,
+      abhaAddress: "gaurav.tripathi_55@abdm",
+    });
+    const p = {
+      abhaNumber: 91501320832162,
+      abhaAddress: "gaurav.tripathi_55@abdm",
+    };
+    createWS(p);
+  };
 
   return (
     <div>
       <h2>WebSocket Connection</h2>
+      <button onClick={handleClick}> click</button>
       {linkToken ? (
         <p>Link Token: {linkToken}</p>
       ) : (
